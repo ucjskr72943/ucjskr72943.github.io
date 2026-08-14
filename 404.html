@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OnlyFans Profile Viewer | OnlyView</title>
+<meta name="description" content="Use OnlyView to search an OnlyFans creator profile by username and continue through a simple profile-viewing experience.">
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://onlyview.live/profile/">
+
+<style>
+:root{--bg:#08090d;--card:#11131a;--line:rgba(255,255,255,.09);--text:#fff;--muted:#a9adba;--pink:#ff2d76;--pink2:#ff6499}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at 50% 0,rgba(255,45,118,.16),transparent 36%),var(--bg);color:var(--text);display:flex;align-items:center;justify-content:center;padding:24px}
+a{text-decoration:none;color:inherit}
+.wrap{width:min(680px,100%)}
+.logo{display:flex;justify-content:center;align-items:center;gap:10px;font-size:21px;font-weight:800;margin-bottom:34px}
+.logo span{width:35px;height:35px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--pink),var(--pink2))}
+.card{background:linear-gradient(145deg,var(--card),#0d0f14);border:1px solid var(--line);border-radius:24px;padding:clamp(25px,6vw,48px);text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.38)}
+.step{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#ff78a5;margin-bottom:13px}
+h1{font-size:clamp(27px,5vw,40px);line-height:1.2;margin-bottom:12px}
+.sub{color:var(--muted);font-size:15px;margin-bottom:25px}
+.username{display:inline-block;padding:10px 16px;border:1px solid rgba(255,45,118,.28);background:rgba(255,45,118,.07);border-radius:12px;color:#ff8caf;font-weight:800;word-break:break-all;margin-bottom:28px}
+.buttons{display:flex;gap:11px;justify-content:center}
+button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:13px 19px;cursor:pointer}
+.yes{background:linear-gradient(135deg,var(--pink),var(--pink2));color:#fff}
+.no{background:#20232d;color:#dfe1e8}
+.status{display:none}
+.loader{width:70px;height:70px;border-radius:50%;border:5px solid rgba(255,255,255,.1);border-top-color:var(--pink);animation:spin 1s linear infinite;margin:20px auto 25px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress{height:7px;background:#22252e;border-radius:99px;overflow:hidden;margin:20px 0 12px}
+.bar{height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--pink2));transition:width 1s linear}
+.timer{color:#858a98;font-size:13px}
+.final{display:none}
+.check{font-size:54px;margin-bottom:12px}
+.notice{margin-top:18px;color:#858a98;font-size:12px;line-height:1.6}
+.back{display:inline-block;margin-top:24px;color:#b9bdc8;font-size:13px}
+.back:hover{color:#fff}
+@media(max-width:500px){.buttons{flex-direction:column}.buttons button{width:100%}}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <a class="logo" href="/"><span>O</span>OnlyView</a>
+
+  <div class="card">
+
+    <div id="confirm">
+      <div class="step">Profile Search</div>
+      <h1>You entered the username:</h1>
+      <div class="username" id="usernameText">Loading...</div>
+      <p class="sub">Please confirm that this is the username you want to search.</p>
+
+      <div class="buttons">
+        <button class="yes" id="yesBtn">YES, IT'S CORRECT!</button>
+        <button class="no" id="noBtn">NO, GO BACK</button>
+      </div>
+    </div>
+
+    <div class="status" id="loading">
+      <div class="step">Profile Search</div>
+      <div class="loader"></div>
+      <h1>Searching profile...</h1>
+      <p class="sub">Please wait while OnlyView processes your request.</p>
+
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <div class="timer" id="timer">20 seconds remaining</div>
+    </div>
+
+    <div class="final" id="final">
+      <div class="check">✓</div>
+      <div class="step">Next Step</div>
+      <h1>One More Step Required</h1>
+      <p class="sub">
+        Your profile search is ready to continue. Follow the next step to proceed.
+      </p>
+
+      <button class="yes" id="continueBtn">CONTINUE</button>
+
+      <p class="notice">
+        OnlyView does not bypass passwords, subscriptions, privacy settings,
+        or other access controls.
+      </p>
+    </div>
+
+    <a class="back" href="/">← Back to OnlyFans Viewer</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  const pathParts = window.location.pathname.split("/").filter(Boolean);
+  const username = pathParts[0] === "profile" && pathParts[1]
+    ? decodeURIComponent(pathParts[1])
+    : "";
+
+  const usernameText = document.getElementById("usernameText");
+  const confirmBox = document.getElementById("confirm");
+  const loadingBox = document.getElementById("loading");
+  const finalBox = document.getElementById("final");
+  const bar = document.getElementById("bar");
+  const timer = document.getElementById("timer");
+
+  if (!username) {
+    usernameText.textContent = "No username provided";
+    document.getElementById("yesBtn").disabled = true;
+  } else {
+    usernameText.textContent = username;
+  }
+
+  document.getElementById("noBtn").addEventListener("click", function(){
+    window.location.href = "/";
+  });
+
+  document.getElementById("yesBtn").addEventListener("click", function(){
+    confirmBox.style.display = "none";
+    loadingBox.style.display = "block";
+
+    let seconds = 20;
+    bar.style.width = "5%";
+
+    const interval = setInterval(function(){
+      seconds--;
+      const completed = ((20 - seconds) / 20) * 100;
+      bar.style.width = Math.min(completed,100) + "%";
+      timer.textContent = seconds > 0
+        ? seconds + " seconds remaining"
+        : "Complete";
+
+      if(seconds <= 0){
+        clearInterval(interval);
+        loadingBox.style.display = "none";
+        finalBox.style.display = "block";
+      }
+    },1000);
+  });
+
+  document.getElementById("continueBtn").addEventListener("click", function(){
+    /*
+      Replace this with your legitimate next-step URL/action.
+    */
+    alert("Continue action is not configured yet.");
+  });
+})();
+</script>
+</body>
+</html>
